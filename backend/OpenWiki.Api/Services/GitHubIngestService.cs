@@ -58,7 +58,7 @@ public class GitHubIngestService
             Directory.CreateDirectory(workDir);
             
             // STEP 1: Clone
-            _logger.LogInformation("📥 STEP 1: Cloning repository...");
+            _logger.LogInformation(" STEP 1: Cloning repository...");
             var cloneProcess = Process.Start(new ProcessStartInfo
             {
                 FileName = "git",
@@ -75,10 +75,10 @@ public class GitHubIngestService
                 var error = await cloneProcess.StandardError.ReadToEndAsync();
                 throw new Exception($"Git clone failed: {error}");
             }
-            _logger.LogInformation("✅ Repository cloned");
+            _logger.LogInformation(" Repository cloned");
 
             // STEP 2: Map files
-            _logger.LogInformation("📂 STEP 2: Reading source files...");
+            _logger.LogInformation(" STEP 2: Reading source files...");
             var allFiles = Directory.GetFiles(workDir, "*.*", SearchOption.AllDirectories)
                 .Where(f => !f.Contains(Path.Combine(workDir, ".git")))
                 .Select(f => f.Substring(workDir.Length).TrimStart(Path.DirectorySeparatorChar))
@@ -139,10 +139,10 @@ public class GitHubIngestService
                 catch { }
             }
 
-            _logger.LogInformation($"📖 Read {fileContents.Count} files ({totalChars:N0} chars)");
+            _logger.LogInformation($" Read {fileContents.Count} files ({totalChars:N0} chars)");
 
             // STEP 4: Generate comprehensive documentation with AI
-            _logger.LogInformation("🧠 STEP 3: Generating multi-document architecture...");
+            _logger.LogInformation(" STEP 3: Generating multi-document architecture...");
             
             var contextBuilder = new System.Text.StringBuilder();
             contextBuilder.AppendLine($"REPOSITORY: {owner}/{repo}");
@@ -156,7 +156,7 @@ public class GitHubIngestService
             var aiResponse = await _aiService.GenerateStructuredDocsAsync(contextBuilder.ToString(), owner, repo);
             
             // STEP 5: Parse AI response
-            _logger.LogInformation("📝 STEP 4: Creating document relations and diagrams...");
+            _logger.LogInformation(" STEP 4: Creating document relations and diagrams...");
             
             var result = ParseAiResponse(aiResponse, fileContents.Keys.ToList());
             
@@ -168,7 +168,7 @@ public class GitHubIngestService
             {
                 if (Directory.Exists(workDir))
                     Directory.Delete(workDir, true);
-                _logger.LogInformation("🧹 Cleaned up");
+                _logger.LogInformation(" Cleaned up");
             }
             catch { }
         }

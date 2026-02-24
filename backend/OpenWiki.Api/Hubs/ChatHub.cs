@@ -19,7 +19,7 @@ public class ChatHub : Hub
     {
         if (Clients == null || Clients.Caller == null) return;
         
-        await Clients.Caller.SendAsync("ReceiveChunk", "🧠 Analyzing codebase...\n\n");
+        await Clients.Caller.SendAsync("ReceiveChunk", " Analyzing codebase...\n\n");
         await Task.Delay(500);
         
         try
