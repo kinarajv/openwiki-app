@@ -1,0 +1,55 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+.vs/
+
+# Node / Frontend
+node_modules/
+dist/
+.vite/
+*.local
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+appsettings.Development.json
+*.pem
+*.key
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.zip
+*.tar.gz
+
+# Logs
+logs/
+*.log
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temp files
+tmp/
+temp/
+*.tmp
