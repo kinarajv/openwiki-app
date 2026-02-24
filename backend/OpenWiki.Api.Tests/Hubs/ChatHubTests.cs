@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
-using DeepWiki.Api.Hubs;
-using DeepWiki.Api.Services;
+using OpenWiki.Api.Hubs;
+using OpenWiki.Api.Services;
 using FluentAssertions;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
@@ -10,7 +10,7 @@ using Xunit;
 using System.Net.Http;
 using System.Collections.Generic;
 
-namespace DeepWiki.Api.Tests.Hubs;
+namespace OpenWiki.Api.Tests.Hubs;
 
 public class ChatHubTests
 {

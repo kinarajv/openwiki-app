@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DeepWiki.Api\DeepWiki.Api.csproj" />
+    <ProjectReference Include="..\OpenWiki.Api\OpenWiki.Api.csproj" />
   </ItemGroup>
 
 </Project>

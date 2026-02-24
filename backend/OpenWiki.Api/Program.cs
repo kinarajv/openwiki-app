@@ -1,6 +1,6 @@
-using DeepWiki.Api.Data;
-using DeepWiki.Api.Hubs;
-using DeepWiki.Api.Services;
+using OpenWiki.Api.Data;
+using OpenWiki.Api.Hubs;
+using OpenWiki.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -20,7 +20,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseInMemoryDatabase("DeepWikiDb");
+    options.UseInMemoryDatabase("OpenWikiDb");
 });
 
 builder.Services.AddSignalR();

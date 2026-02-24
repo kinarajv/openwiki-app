@@ -1,4 +1,4 @@
-# DeepWiki Technical Architecture & Development Plan (.NET 8 + React)
+# OpenWiki Technical Architecture & Development Plan (.NET 8 + React)
 
 ## 1. Project Setup & Foundational Architecture
 

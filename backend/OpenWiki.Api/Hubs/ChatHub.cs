@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
-using DeepWiki.Api.Services;
+using OpenWiki.Api.Services;
 using System.Text.Json;
 
-namespace DeepWiki.Api.Hubs;
+namespace OpenWiki.Api.Hubs;
 
 public class ChatHub : Hub
 {

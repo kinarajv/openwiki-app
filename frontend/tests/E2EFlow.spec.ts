@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('DeepWiki End-to-End Flow', () => {
+test.describe('OpenWiki End-to-End Flow', () => {
 
   test('Mock offline ingestion and streaming fallback', async ({ page }) => {
     // Navigate to app

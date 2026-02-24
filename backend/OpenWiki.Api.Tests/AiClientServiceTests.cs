@@ -1,14 +1,14 @@
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using DeepWiki.Api.Services;
+using OpenWiki.Api.Services;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using Moq.Protected;
 using Xunit;
 
-namespace DeepWiki.Api.Tests;
+namespace OpenWiki.Api.Tests;
 
 public class AiClientServiceTests
 {

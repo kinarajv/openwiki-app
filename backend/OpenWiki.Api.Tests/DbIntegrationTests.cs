@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
-using DeepWiki.Api.Data;
+using OpenWiki.Api.Data;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
-namespace DeepWiki.Api.Tests;
+namespace OpenWiki.Api.Tests;
 
 public class DbIntegrationTests 
 {
@@ -13,7 +13,7 @@ public class DbIntegrationTests
     {
         // Arrange
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: "DeepWikiTestDb")
+            .UseInMemoryDatabase(databaseName: "OpenWikiTestDb")
             .Options;
 
         using var context = new AppDbContext(options);

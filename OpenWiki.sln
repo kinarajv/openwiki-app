@@ -5,9 +5,9 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{09B26697-D28C-46D8-98BF-F20384909512}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeepWiki.Api", "backend\DeepWiki.Api\DeepWiki.Api.csproj", "{0CF436E2-4716-4B2D-B80D-652921FA2FCB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenWiki.Api", "backend\OpenWiki.Api\OpenWiki.Api.csproj", "{0CF436E2-4716-4B2D-B80D-652921FA2FCB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeepWiki.Api.Tests", "backend\DeepWiki.Api.Tests\DeepWiki.Api.Tests.csproj", "{1DFADD02-06FE-4F4C-BB05-8864FA7A208E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenWiki.Api.Tests", "backend\OpenWiki.Api.Tests\OpenWiki.Api.Tests.csproj", "{1DFADD02-06FE-4F4C-BB05-8864FA7A208E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

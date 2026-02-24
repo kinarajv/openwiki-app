@@ -297,7 +297,7 @@ function App() {
 
   const sendQuestion = async () => {
     if (connection && question.trim() && activeRepo) {
-      setChatLog(prev => prev + '\n\n**You:** ' + question + '\n\n**DeepWiki:**\n');
+      setChatLog(prev => prev + '\n\n**You:** ' + question + '\n\n**OpenWiki:**\n');
       setIsTyping(true);
       try {
         await connection.send('AskQuestion', activeRepo, mode.toLowerCase(), question);
@@ -315,7 +315,7 @@ function App() {
       <div className="min-h-screen bg-[#FAFAFA] font-sans">
         <header className="border-b border-dashed border-[#E5E5E5] bg-white">
           <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
-            <span className="text-2xl font-bold text-[#1A1A1A]">DeepWiki</span>
+            <span className="text-2xl font-bold text-[#1A1A1A]">OpenWiki</span>
             <button className="text-[#6B6B6B] hover:text-[#1A1A1A]"><Moon className="w-5 h-5" /></button>
           </div>
         </header>
@@ -361,7 +361,7 @@ function App() {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center font-sans">
         <div className="max-w-lg w-full px-6">
-          <div className="text-center mb-8"><h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">DeepWiki</h1><p className="text-[#6B6B6B]">Indexing...</p></div>
+          <div className="text-center mb-8"><h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">OpenWiki</h1><p className="text-[#6B6B6B]">Indexing...</p></div>
           <div className="w-full flex flex-col gap-4">
             {INGEST_STEPS.map((step, idx) => {
               const Icon = step.icon;
@@ -387,7 +387,7 @@ function App() {
     <div className="min-h-screen bg-[#FAFAFA] font-sans">
       <header className="h-[60px] flex justify-between items-center px-6 border-b border-dashed border-[#E5E5E5] bg-white sticky top-0 z-40">
         <div className="flex items-center gap-4">
-          <button onClick={() => setView('home')} className="text-2xl font-bold text-[#1A1A1A] hover:text-blue-600">DeepWiki</button>
+          <button onClick={() => setView('home')} className="text-2xl font-bold text-[#1A1A1A] hover:text-blue-600">OpenWiki</button>
           {activeRepo && (
             <div className="flex items-center gap-2 text-[#6B6B6B]">
               <span className="text-lg">{activeRepo}</span>

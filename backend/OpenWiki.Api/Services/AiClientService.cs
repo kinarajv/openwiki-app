@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text;
 
-namespace DeepWiki.Api.Services;
+namespace OpenWiki.Api.Services;
 
 public class AiClientService
 {

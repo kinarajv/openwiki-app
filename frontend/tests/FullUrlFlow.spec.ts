@@ -21,6 +21,6 @@ test('Ingest repository using full GitHub URL', async ({ page }) => {
   
   // The generated document pane should show the fallback message about the AI connection
   const docPane = page.locator('.prose');
-  await expect(docPane).toContainText('DeepWiki Analysis', { timeout: 5000 });
+  await expect(docPane).toContainText('OpenWiki Analysis', { timeout: 5000 });
   await expect(docPane).toContainText('router-for-me', { timeout: 5000 });
 });

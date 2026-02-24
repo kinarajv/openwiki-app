@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('has title and search bar', async ({ page }) => {
   await page.goto('/');
 
-  await expect(page.getByText('DeepWiki')).toBeVisible();
+  await expect(page.getByText('OpenWiki')).toBeVisible();
   await expect(page.getByText('Which repo would you like to understand?')).toBeVisible();
 
   const searchInput = page.getByPlaceholder('Enter GitHub URL or owner/repo');
@@ -39,5 +39,5 @@ test('can switch between fast and deep modes', async ({ page }) => {
   await sendButton.click({ force: true });
 
   const chatLog = page.locator('#chat-log');
-  await expect(chatLog).toContainText('DeepWiki (deep mode):', { timeout: 10000 });
+  await expect(chatLog).toContainText('OpenWiki (deep mode):', { timeout: 10000 });
 });

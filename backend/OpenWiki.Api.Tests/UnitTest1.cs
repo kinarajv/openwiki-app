@@ -1,4 +1,4 @@
-namespace DeepWiki.Api.Tests;
+namespace OpenWiki.Api.Tests;
 
 public class UnitTest1
 {

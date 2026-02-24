@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace DeepWiki.Api.Data;
+namespace OpenWiki.Api.Data;
 
 public class AppDbContext : DbContext
 {

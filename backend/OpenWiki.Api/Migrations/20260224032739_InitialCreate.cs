@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace DeepWiki.Api.Migrations
+namespace OpenWiki.Api.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

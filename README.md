@@ -1,4 +1,4 @@
-# DeepWiki MVP
+# OpenWiki MVP
 
 AI-powered documentation generator with multi-document architecture, Mermaid diagrams, and persistent indexing.
 
@@ -21,7 +21,7 @@ AI-powered documentation generator with multi-document architecture, Mermaid dia
 
 ### Backend
 ```bash
-cd backend/DeepWiki.Api
+cd backend/OpenWiki.Api
 dotnet restore
 dotnet run --urls "http://localhost:5000"
 ```

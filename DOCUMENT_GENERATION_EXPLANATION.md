@@ -1,7 +1,7 @@
-# DeepWiki - Full E2E Flow Documentation
+# OpenWiki - Full E2E Flow Documentation
 
 ## 1. The Core Architecture Principle
-Yes, DeepWiki **does create a document**. That is the fundamental difference between DeepWiki and a standard AI chatbot. 
+Yes, OpenWiki **does create a document**. That is the fundamental difference between OpenWiki and a standard AI chatbot. 
 
 It generates a static, highly structured **Markdown Document** first, and *then* allows you to chat with it.
 

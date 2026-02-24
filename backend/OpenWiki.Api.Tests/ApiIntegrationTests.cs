@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using DeepWiki.Api.Data;
-using DeepWiki.Api.Services;
+using OpenWiki.Api.Data;
+using OpenWiki.Api.Services;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Moq;
 using Xunit;
 
-namespace DeepWiki.Api.Tests;
+namespace OpenWiki.Api.Tests;
 
 public class ApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {

@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace DeepWiki.Api.Services;
+namespace OpenWiki.Api.Services;
 
 public class IngestResult
 {

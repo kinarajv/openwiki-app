@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace DeepWiki.Api.Services;
+namespace OpenWiki.Api.Services;
 
 public class GitHubService
 {
@@ -12,7 +12,7 @@ public class GitHubService
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri("https://api.github.com/");
-        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("DeepWiki", "1.0"));
+        _httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("OpenWiki", "1.0"));
         
         _token = config["GITHUB_API_TOKEN"];
         if (!string.IsNullOrEmpty(_token))
