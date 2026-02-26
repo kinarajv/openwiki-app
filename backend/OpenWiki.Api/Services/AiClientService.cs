@@ -29,7 +29,7 @@ public class AiClientService : IAiClientService
 
         if (string.IsNullOrEmpty(codeContext)) throw new ArgumentException("codeContext cannot be null or empty", nameof(codeContext));
 
-        {
+        try {
             var systemPrompt = @"You are an expert software architect and technical writer. You must analyze the provided source code and generate COMPREHENSIVE documentation in JSON format.
 
 IMPORTANT: You MUST output valid JSON with this EXACT structure:

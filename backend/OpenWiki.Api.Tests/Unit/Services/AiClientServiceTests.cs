@@ -89,9 +89,9 @@ public class AiClientServiceTests
 
 
     [Test]
-    public void GenerateStructuredDocsAsync_NullOrEmptyCode_ThrowsInvalidOperationException()
+    public void GenerateStructuredDocsAsync_NullOrEmptyCode_ThrowsArgumentException()
     {
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.GenerateStructuredDocsAsync("", "owner", "repo"));
+        Assert.ThrowsAsync<ArgumentException>(async () => await _service.GenerateStructuredDocsAsync("", "owner", "repo"));
     }
 
 }
