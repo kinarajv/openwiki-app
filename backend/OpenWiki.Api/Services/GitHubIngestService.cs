@@ -88,7 +88,7 @@ public class GitHubIngestService : IGitHubIngestService
                         totalChars += content.Length;
                     }
                 }
-                catch { }
+                catch (Exception ex) { _logger.LogWarning(ex, "Failed to read file: {File}", file); }
             }
 
             // Read configs
@@ -111,7 +111,7 @@ public class GitHubIngestService : IGitHubIngestService
                     if (content.Length < 5000)
                         fileContents[file] = content;
                 }
-                catch { }
+                catch (Exception ex) { _logger.LogWarning(ex, "Failed to read config file: {File}", file); }
             }
 
             _logger.LogInformation($" Read {fileContents.Count} files ({totalChars:N0} chars)");
@@ -145,7 +145,7 @@ public class GitHubIngestService : IGitHubIngestService
                     Directory.Delete(workDir, true);
                 _logger.LogInformation(" Cleaned up");
             }
-            catch { }
+            catch { /* Best-effort cleanup — do not propagate */ }
         }
     }
 

@@ -17,20 +17,17 @@ public class DocumentationRepo : IDocumentationRepo
     public async Task<Documentation> AddAsync(Documentation entity)
     {
         _db.Documentations.Add(entity);
-        await _db.SaveChangesAsync();
         return entity;
     }
 
     public async Task AddSectionAsync(DocSection section)
     {
         _db.DocSections.Add(section);
-        await _db.SaveChangesAsync();
     }
 
     public async Task AddRelationAsync(DocRelation relation)
     {
         _db.DocRelations.Add(relation);
-        await _db.SaveChangesAsync();
     }
 
     public async Task<List<DocSection>> GetSectionsByRepoIdAsync(Guid repoId)

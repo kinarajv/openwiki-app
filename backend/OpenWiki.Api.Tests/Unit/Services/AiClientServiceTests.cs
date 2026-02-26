@@ -86,4 +86,12 @@ public class AiClientServiceTests
         // Act & Assert
         Assert.ThrowsAsync<Exception>(() => _service.GenerateStructuredDocsAsync("code", "owner", "repo"));
     }
+
+
+    [Test]
+    public void GenerateStructuredDocsAsync_NullOrEmptyCode_ThrowsInvalidOperationException()
+    {
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.GenerateStructuredDocsAsync("", "owner", "repo"));
+    }
+
 }

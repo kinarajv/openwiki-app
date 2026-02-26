@@ -16,4 +16,62 @@ public class AppDbContext : DbContext
     public DbSet<Diagram> Diagrams { get; set; }
     public DbSet<AiConversation> AiConversations { get; set; }
     public DbSet<ChatMessage> ChatMessages { get; set; }
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Repository
+        modelBuilder.Entity<Repository>()
+            .HasKey(r => r.Id);
+        modelBuilder.Entity<Repository>()
+            .HasIndex(r => r.FullName).IsUnique();
+
+        // Documentation
+        modelBuilder.Entity<Documentation>()
+            .HasKey(d => d.Id);
+        modelBuilder.Entity<Documentation>()
+            .HasOne(d => d.Repository)
+            .WithMany(r => r.Documentations)
+            .HasForeignKey(d => d.RepositoryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // DocSection
+        modelBuilder.Entity<DocSection>()
+            .HasKey(s => s.Id);
+        modelBuilder.Entity<DocSection>()
+            .HasOne(s => s.Documentation)
+            .WithMany(d => d.Sections)
+            .HasForeignKey(s => s.DocumentationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // DocRelation
+        modelBuilder.Entity<DocRelation>()
+            .HasKey(r => r.Id);
+
+        // CodeFile
+        modelBuilder.Entity<CodeFile>()
+            .HasKey(c => c.Id);
+
+        // Diagram
+        modelBuilder.Entity<Diagram>()
+            .HasKey(d => d.Id);
+
+        // AiConversation
+        modelBuilder.Entity<AiConversation>()
+            .HasKey(c => c.Id);
+        modelBuilder.Entity<AiConversation>()
+            .HasOne(c => c.Repository)
+            .WithMany()
+            .HasForeignKey(c => c.RepositoryId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // ChatMessage
+        modelBuilder.Entity<ChatMessage>()
+            .HasKey(m => m.Id);
+        modelBuilder.Entity<ChatMessage>()
+            .HasOne(m => m.Conversation)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.ConversationId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
 }

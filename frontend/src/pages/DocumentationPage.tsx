@@ -43,47 +43,49 @@ export function DocumentationPage() {
       setView('checking');
       setCachedStatus(null);
       
-      const checkData = await checkRepo(owner, repo);
-      if (checkData.indexed) {
-        setCachedStatus('Previously indexed');
-        const data = await getRepoData(owner, repo);
-        if (data) {
+      try {
+        const checkData = await checkRepo(owner, repo);
+        if (checkData.indexed) {
+          setCachedStatus('Previously indexed');
+          const data = await getRepoData(owner, repo);
+          if (data) {
+            setActiveRepo(`${owner}/${repo}`);
+            setGeneratedDoc(data.document);
+            setRepoMetadata(data.metadata);
+            setDocSections(data.sections || []);
+            setDiagrams(data.diagrams || []);
+            setRelations(data.relations || []);
+            setView('documentation');
+            return;
+          }
+        }
+        
+        setView('ingesting');
+        setLoadingStep(0);
+        setGeneratedDoc(null);
+        setChatLog('');
+        setDocSections([]);
+        setDiagrams([]);
+        setRelations([]);
+        
+        const stepTimer = setInterval(() => setLoadingStep(prev => prev < 3 ? prev + 1 : prev), 4000);
+
+        try {
+          const data = await ingestRepo(owner, repo);
           setActiveRepo(`${owner}/${repo}`);
           setGeneratedDoc(data.document);
-          setRepoMetadata(data.metadata);
+          setRepoMetadata(data.metadata || { stars: 0, language: 'Unknown' });
+          setCachedStatus(data.status === 'cached' ? 'Loaded from cache' : 'Newly indexed');
           setDocSections(data.sections || []);
           setDiagrams(data.diagrams || []);
           setRelations(data.relations || []);
           setView('documentation');
-          return;
+        } finally {
+          clearInterval(stepTimer);
         }
-      }
-      
-      setView('ingesting');
-      setLoadingStep(0);
-      setGeneratedDoc(null);
-      setChatLog('');
-      setDocSections([]);
-      setDiagrams([]);
-      setRelations([]);
-      
-      const stepTimer = setInterval(() => setLoadingStep(prev => prev < 3 ? prev + 1 : prev), 4000);
-
-      try {
-        const data = await ingestRepo(owner, repo);
-        setActiveRepo(`${owner}/${repo}`);
-        setGeneratedDoc(data.document);
-        setRepoMetadata(data.metadata || { stars: 0, language: 'Unknown' });
-        setCachedStatus(data.status === 'cached' ? 'Loaded from cache' : 'Newly indexed');
-        setDocSections(data.sections || []);
-        setDiagrams(data.diagrams || []);
-        setRelations(data.relations || []);
-        setView('documentation');
       } catch (e: any) {
         setGeneratedDoc(`# Error\n\nBackend failed.\n\n\`\`\`\n${e.message}\n\`\`\``);
         setView('documentation');
-      } finally {
-        clearInterval(stepTimer);
       }
     };
     

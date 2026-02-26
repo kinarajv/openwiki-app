@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OpenWiki.Api.Data;
+using OpenWiki.Api.Repositories.Interfaces;
 using OpenWiki.Api.Models;
 using OpenWiki.Api.Services;
-using Serilog;
+using OpenWiki.Api.Services.Interfaces;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Text.Json;
@@ -15,26 +16,34 @@ namespace OpenWiki.Api.Controllers
     [Route("api")]
     public class RepositoryController : ControllerBase
     {
-        private readonly AppDbContext _db;
-        private readonly GitHubService _gitHubService;
+        private readonly IRepositoryRepo _repositoryRepo;
+        private readonly IDocumentationRepo _documentationRepo;
+        private readonly IDiagramRepo _diagramRepo;
+        private readonly IGitHubService _gitHubService;
         private readonly GitHubIngestService _ingestService;
+        private readonly ILogger<RepositoryController> _logger;
 
-        public RepositoryController(AppDbContext db, GitHubService gitHubService, GitHubIngestService ingestService)
+        public RepositoryController(
+            IRepositoryRepo repositoryRepo,
+            IDocumentationRepo documentationRepo,
+            IDiagramRepo diagramRepo,
+            IGitHubService gitHubService, 
+            GitHubIngestService ingestService, 
+            ILogger<RepositoryController> logger)
         {
-            _db = db;
+            _repositoryRepo = repositoryRepo;
+            _documentationRepo = documentationRepo;
+            _diagramRepo = diagramRepo;
             _gitHubService = gitHubService;
             _ingestService = ingestService;
+            _logger = logger;
         }
 
         [HttpGet("repo/check")]
         public async Task<IActionResult> CheckRepo([FromQuery] string owner, [FromQuery] string repo)
         {
             var fullName = $"{owner}/{repo}";
-            var existing = await _db.Repositories
-                .Include(r => r.Documentations)
-                .ThenInclude(d => d.Sections)
-                .FirstOrDefaultAsync(r => r.FullName == fullName);
-            
+            var existing = await _repositoryRepo.GetByFullNameAsync(fullName);
             if (existing != null && existing.DocStatus == "completed")
             {
                 return Ok(new { 
@@ -51,11 +60,7 @@ namespace OpenWiki.Api.Controllers
         public async Task<IActionResult> GetRepoData([FromQuery] string owner, [FromQuery] string repo)
         {
             var fullName = $"{owner}/{repo}";
-            var existing = await _db.Repositories
-                .Include(r => r.Documentations)
-                .ThenInclude(d => d.Sections)
-                .FirstOrDefaultAsync(r => r.FullName == fullName);
-            
+            var existing = await _repositoryRepo.GetByFullNameAsync(fullName);
             if (existing == null)
             {
                 return NotFound(new { error = "Repository not indexed" });
@@ -66,13 +71,9 @@ namespace OpenWiki.Api.Controllers
                 .OrderBy(s => s.OrderIndex)
                 .ToList();
 
-            var relations = await _db.DocRelations
-                .Where(r => r.RepositoryId == existing.Id)
-                .ToListAsync();
+            var relations = await _documentationRepo.GetRelationsByRepoIdAsync(existing.Id);
 
-            var diagrams = await _db.Diagrams
-                .Where(d => d.RepositoryId == existing.Id)
-                .ToListAsync();
+            var diagrams = await _diagramRepo.GetByRepoIdAsync(existing.Id);
 
             var fullDoc = string.Join("\n\n---\n\n", sections.Select(s => 
                 $"{(s.Level == 1 ? "# " : "## ")}{s.Title}\n\n{s.ContentMarkdown}"
@@ -116,16 +117,13 @@ namespace OpenWiki.Api.Controllers
             {
                 var fullName = $"{owner}/{repo}";
                 
-                var existing = await _db.Repositories.FirstOrDefaultAsync(r => r.FullName == fullName);
+                var existing = await _repositoryRepo.GetByFullNameSimpleAsync(fullName);
                 if (existing != null && existing.DocStatus == "completed")
                 {
-                    Log.Information("[Program.cs] Repository {FullName} already indexed, returning cached data", fullName);
-                    var existingSections = await _db.DocSections
-                        .Where(s => s.Documentation.RepositoryId == existing.Id)
-                        .OrderBy(s => s.OrderIndex)
-                        .ToListAsync();
+                    _logger.LogInformation("Repository {FullName} already indexed, returning cached data", fullName);
+                    var existingSections = await _documentationRepo.GetSectionsByRepoIdAsync(existing.Id);
 
-                    var fullDoc = string.Join("\n\n---\n\n", existingSections.Select(s => 
+                    var fullDoc = string.Join("\\n\\n---\\n\\n", existingSections.Select(s => 
                         $"{(s.Level == 1 ? "# " : "## ")}{s.Title}\n\n{s.ContentMarkdown}"
                     ));
 
@@ -162,7 +160,7 @@ namespace OpenWiki.Api.Controllers
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning(ex, "[Program.cs] GitHub metadata fetch failed (continuing without): {Message}", ex.Message);
+                    _logger.LogWarning(ex, "GitHub metadata fetch failed for {FullName}: {Message}", fullName, ex.Message);
                 }
 
                 var result = await _ingestService.ProcessRepositoryAsync(owner, repo);
@@ -178,7 +176,7 @@ namespace OpenWiki.Api.Controllers
                     DocStatus = "completed",
                     IndexedAt = DateTime.UtcNow
                 };
-                _db.Repositories.Add(repository);
+                await _repositoryRepo.AddAsync(repository);
 
                 var documentation = new Documentation 
                 { 
@@ -186,7 +184,7 @@ namespace OpenWiki.Api.Controllers
                     Title = $"{owner}/{repo} Documentation",
                     Status = "completed"
                 };
-                _db.Documentations.Add(documentation);
+                await _documentationRepo.AddAsync(documentation);
 
                 for (int i = 0; i < result.Sections.Count; i++)
                 {
@@ -202,12 +200,11 @@ namespace OpenWiki.Api.Controllers
                         Summary = section.Summary,
                         SectionType = section.SectionType
                     };
-                    _db.DocSections.Add(docSection);
+                    await _documentationRepo.AddSectionAsync(docSection);
                 }
-
                 foreach (var diagram in result.Diagrams)
                 {
-                    _db.Diagrams.Add(new Diagram
+                    await _diagramRepo.AddAsync(new Diagram
                     {
                         RepositoryId = repository.Id,
                         Title = diagram.Title,
@@ -216,7 +213,7 @@ namespace OpenWiki.Api.Controllers
                     });
                 }
 
-                await _db.SaveChangesAsync();
+                await _repositoryRepo.SaveChangesAsync();
 
                 var fullDocOutput = result.Overview;
                 if (result.Sections.Any())
@@ -248,7 +245,7 @@ namespace OpenWiki.Api.Controllers
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "[Program.cs] Critical Ingest Error: {Message}", ex.Message);
+                _logger.LogError(ex, "Ingest failed for {Owner}/{Repo}: {Message}", owner, repo, ex.Message);
                 return Problem(ex.Message);
             }
         }

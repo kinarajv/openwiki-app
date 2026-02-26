@@ -117,4 +117,13 @@ public class GitHubServiceTests
         Assert.That(results, Is.Not.Null);
         Assert.That(results, Is.Empty);
     }
+
+
+    [Test]
+    public async Task SearchReposAsync_NullOrEmptyQuery_ReturnsEmptyList()
+    {
+        var result = await _service.SearchReposAsync("");
+        result.Should().BeEmpty();
+    }
+
 }

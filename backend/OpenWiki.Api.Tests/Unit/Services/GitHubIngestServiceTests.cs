@@ -38,9 +38,31 @@ public class GitHubIngestServiceTests
     [Test]
     public void ParseAiResponse_ValidJson_ReturnsIngestResult()
     {
-        // For parsing AI response validation, normally we would extract logic or use a dummy repo.
-        // We will leave this stubbed as requested to avoid side-effects.
-        Assert.Pass();
+        // Arrange
+        var json = @"
+        {
+            ""overview"": ""Test Overview"",
+            ""sections"": [
+                { ""title"": ""Section 1"", ""content"": ""Content 1"" }
+            ],
+            ""relations"": [],
+            ""diagrams"": [
+                { ""title"": ""Diag 1"", ""content"": ""A -> B"" }
+            ]
+        }";
+        var files = new System.Collections.Generic.List<string> { "file1.cs" };
+
+        var methodInfo = typeof(GitHubIngestService).GetMethod("ParseAiResponse", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        // Act
+        var result = (IngestResult)methodInfo.Invoke(_service, new object[] { json, files });
+
+        // Assert
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Overview, Is.EqualTo("Test Overview"));
+        Assert.That(result.Sections.Count, Is.EqualTo(2)); // Overview + Section 1
+        Assert.That(result.Diagrams.Count, Is.EqualTo(1));
+        Assert.That(result.Diagrams[0].Title, Is.EqualTo("Diag 1"));
     }
 
     [Test]

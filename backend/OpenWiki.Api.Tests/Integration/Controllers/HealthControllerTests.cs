@@ -3,34 +3,39 @@ using System.Net;
 using System.Threading.Tasks;
 using NUnit.Framework;
 
+using OpenWiki.Api.Tests.Infrastructure;
+using FluentAssertions;
+
 namespace OpenWiki.Api.Tests.Integration.Controllers
 {
     [TestFixture]
     public class HealthControllerTests
     {
-        private WebApplicationFactory<Program> _factory;
+        private WebAppFactory _factory;
+        private HttpClient _client;
 
-        [SetUp]
-        public void Setup()
+        [OneTimeSetUp]
+        public async Task Setup()
         {
-            _factory = new WebApplicationFactory<Program>();
+            _factory = new WebAppFactory();
+            await _factory.InitializeAsync();
+            _client = _factory.CreateClient();
         }
 
-        [TearDown]
-        public void TearDown()
+        [OneTimeTearDown]
+        public async Task TearDown()
         {
-            _factory.Dispose();
+            _client?.Dispose();
+            if (_factory != null) await _factory.DisposeAsync();
         }
-
         [Test]
         public async Task GetHealth_ReturnsHealthyStatus()
         {
-            var client = _factory.CreateClient();
-            var response = await client.GetAsync("/api/health");
+            var response = await _client.GetAsync("/api/health");
 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
             var content = await response.Content.ReadAsStringAsync();
-            Assert.That(content, Does.Contain("\"status\":\"healthy\""));
+            content.Should().Contain("\"status\":\"healthy\"");
         }
     }
 }

@@ -22,10 +22,15 @@ public class RepositoryRepo : IRepositoryRepo
             .FirstOrDefaultAsync(r => r.FullName == fullName);
     }
 
+    public async Task<Repository?> GetByFullNameSimpleAsync(string fullName)
+    {
+        return await _db.Repositories
+            .FirstOrDefaultAsync(r => r.FullName == fullName);
+    }
+
     public async Task<Repository> AddAsync(Repository entity)
     {
         _db.Repositories.Add(entity);
-        await _db.SaveChangesAsync();
         return entity;
     }
 

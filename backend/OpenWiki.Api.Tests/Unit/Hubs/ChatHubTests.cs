@@ -7,6 +7,7 @@ using Moq.Protected;
 using NUnit.Framework;
 using OpenWiki.Api.Hubs;
 using OpenWiki.Api.Services;
+using OpenWiki.Api.Services.Interfaces;
 
 namespace OpenWiki.Api.Tests.Unit.Hubs;
 
@@ -16,7 +17,7 @@ public class ChatHubTests
     private Mock<IHttpClientFactory> _httpClientFactoryMock;
     private Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private HttpClient _httpClient;
-    private Mock<AiClientService> _aiServiceMock;
+    private Mock<IAiClientService> _aiServiceMock;
     private Mock<ILogger<ChatHub>> _loggerMock;
     private Mock<IConfiguration> _configMock;
     private Mock<IHubCallerClients> _clientsMock;
@@ -32,7 +33,7 @@ public class ChatHubTests
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         _httpClientFactoryMock.Setup(f => f.CreateClient(It.IsAny<string>())).Returns(_httpClient);
 
-        _aiServiceMock = new Mock<AiClientService>(MockBehavior.Loose, new HttpClient(), new Mock<IConfiguration>().Object, new Mock<ILogger<AiClientService>>().Object);
+        _aiServiceMock = new Mock<IAiClientService>();
         _loggerMock = new Mock<ILogger<ChatHub>>();
         _configMock = new Mock<IConfiguration>();
         _configMock.Setup(c => c["Cliproxy:ApiUrl"]).Returns("http://testapi");
@@ -109,4 +110,21 @@ public class ChatHubTests
         _clientProxyMock.Verify(c => c.SendCoreAsync("ReceiveChunk", It.Is<object[]>(o => o.Contains("Sorry, I couldn't connect to the AI service. Please check that cliproxy is running.")), default), Times.Once);
         _clientProxyMock.Verify(c => c.SendCoreAsync("ReceiveComplete", Array.Empty<object>(), default), Times.Once);
     }
+
+
+    [Test]
+    public async Task AskQuestion_NullOrEmptyRepoId_ReturnsEarly()
+    {
+        await _hub.AskQuestion("", "mode1", "question?");
+        _clientProxyMock.Verify(c => c.SendCoreAsync(It.IsAny<string>(), It.IsAny<object[]>(), default), Times.Never);
+    }
+
+    [Test]
+    public async Task AskQuestion_NullClients_ReturnsEarly()
+    {
+        _hub.Clients = null;
+        await _hub.AskQuestion("repo1", "mode1", "question?");
+        _aiServiceMock.Verify(a => a.GenerateStructuredDocsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
 }

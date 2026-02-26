@@ -20,13 +20,15 @@ public class AiClientService : IAiClientService
         _httpClient = httpClient;
         _apiUrl = config["Cliproxy:ApiUrl"]?.TrimEnd('/') ?? "http://localhost:8317";
         _fastModel = config["Cliproxy:FastModel"] ?? "gpt-5-codex-mini";
-        _apiKey = config["OPENCLAW_API_KEY"] ?? "sk-apikey"; 
+        _apiKey = config["OPENCLAW_API_KEY"] ?? "not-configured"; 
         _logger = logger;
     }
 
     public virtual async Task<string> GenerateStructuredDocsAsync(string codeContext, string owner, string repo)
     {
-        try 
+
+        if (string.IsNullOrEmpty(codeContext)) throw new ArgumentException("codeContext cannot be null or empty", nameof(codeContext));
+
         {
             var systemPrompt = @"You are an expert software architect and technical writer. You must analyze the provided source code and generate COMPREHENSIVE documentation in JSON format.
 

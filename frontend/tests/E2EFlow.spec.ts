@@ -1,29 +1,32 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('OpenWiki End-to-End Flow', () => {
-  test('Mock ingestion flow', async ({ page }) => {
-    await page.route('**/api/Repository/check*', async route => {
+  test('Mock offline ingestion and streaming fallback', async ({ page }) => {
+    // Mock check
+    await page.route('**/api/repo/check*', async route => {
       await route.fulfill({ json: { indexed: false } });
     });
 
-    await page.route('**/api/Repository/ingest*', async route => {
+    // Mock ingest
+    await page.route('**/api/ingest*', async route => {
       const json = {
         status: 'completed',
         owner: 'microsoft',
         repo: 'playwright',
         document: '# Overview\n\nPlaywright is a testing framework.',
         metadata: { stars: 68000, language: 'TypeScript', description: 'Playwright testing' },
-        sections: 1,
-        relations: 0,
-        diagrams: 0
+        sections: [],
+        relations: [],
+        diagrams: []
       };
       await route.fulfill({ json });
     });
 
     await page.goto('/');
     
-    // Test card
-    await page.getByTestId('repo-card-microsoft/playwright').click();
+    // Click microsoft/playwright repo from popular repos list
+    const repoCards = page.getByTestId('repo-card');
+    await repoCards.filter({ hasText: 'microsoft/playwright' }).click();
     
     // Expect documentation
     await expect(page.getByTestId('doc-viewer')).toBeVisible({ timeout: 15000 });

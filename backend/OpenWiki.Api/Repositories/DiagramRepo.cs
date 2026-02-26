@@ -17,7 +17,6 @@ public class DiagramRepo : IDiagramRepo
     public async Task AddAsync(Diagram diagram)
     {
         _db.Diagrams.Add(diagram);
-        await _db.SaveChangesAsync();
     }
 
     public async Task<List<Diagram>> GetByRepoIdAsync(Guid repoId)

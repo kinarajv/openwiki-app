@@ -1,3 +1,4 @@
+using OpenWiki.Api.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using OpenWiki.Api.Services;
 using System.Text.Json;
@@ -8,26 +9,29 @@ namespace OpenWiki.Api.Hubs;
 
 public class ChatHub : Hub
 {
-    private readonly AiClientService _aiService;
+    private readonly IAiClientService _aiService;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ChatHub> _logger;
     private readonly string _apiUrl;
     private readonly string _fastModel;
     private readonly string _apiKey;
 
-    public ChatHub(AiClientService aiService, IHttpClientFactory httpClientFactory, ILogger<ChatHub> logger, IConfiguration config)
+    public ChatHub(IAiClientService aiService, IHttpClientFactory httpClientFactory, ILogger<ChatHub> logger, IConfiguration config)
     {
         _aiService = aiService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
         _apiUrl = config["Cliproxy:ApiUrl"]?.TrimEnd('/') ?? "http://localhost:8317";
         _fastModel = config["Cliproxy:FastModel"] ?? "gpt-5-codex-mini";
-        _apiKey = config["OPENCLAW_API_KEY"] ?? "sk-apikey";
+        _apiKey = config["OPENCLAW_API_KEY"] ?? "not-configured";
+        if (string.IsNullOrEmpty(config["OPENCLAW_API_KEY"]))
+            _logger.LogWarning("OPENCLAW_API_KEY is not configured. AI features will not work.");
     }
-
     public async Task AskQuestion(string repoId, string mode, string question)
     {
         if (Clients == null || Clients.Caller == null) return;
+
+        if (string.IsNullOrEmpty(repoId)) return;
         
         await Clients.Caller.SendAsync("ReceiveChunk", " Analyzing codebase...\n\n");
         await Task.Delay(500);

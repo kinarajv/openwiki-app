@@ -24,8 +24,8 @@ namespace OpenWiki.Api.Extensions
             
             services.AddHttpClient<IGitHubService, GitHubService>();
             services.AddHttpClient<IAiClientService, AiClientService>();
-            services.AddScoped<GitHubIngestService>();
-            services.AddScoped<GitHubService>(); // For RepositoryController direct use
+            services.AddHttpClient("ChatHub");
+            services.AddScoped<IGitHubIngestService, GitHubIngestService>();
 
             return services;
         }

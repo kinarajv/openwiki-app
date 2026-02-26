@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using OpenWiki.Api.Tests.Infrastructure;
+using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using OpenWiki.Api.Data;
@@ -12,46 +14,30 @@ namespace OpenWiki.Api.Tests.Integration.Controllers
     [TestFixture]
     public class RepositoryControllerTests
     {
-        private WebApplicationFactory<Program> _factory;
+        private WebAppFactory _factory;
+        private HttpClient _client;
 
-        [SetUp]
-        public void Setup()
+        [OneTimeSetUp]
+        public async Task Setup()
         {
-            _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureServices(services =>
-                {
-                    var descriptor = services.SingleOrDefault(
-                        d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-
-                    if (descriptor != null)
-                    {
-                        services.Remove(descriptor);
-                    }
-
-                    services.AddDbContext<AppDbContext>(options =>
-                    {
-                        options.UseInMemoryDatabase("InMemoryDbForTesting");
-                    });
-                });
-            });
+            _factory = new WebAppFactory();
+            await _factory.InitializeAsync();
+            _client = _factory.CreateClient();
         }
 
-        [TearDown]
-        public void TearDown()
+        [OneTimeTearDown]
+        public async Task TearDown()
         {
-            _factory.Dispose();
+            _client?.Dispose();
+            if (_factory != null) await _factory.DisposeAsync();
         }
-
         [Test]
         public async Task CheckRepo_ReturnsOk()
         {
-            var client = _factory.CreateClient();
-            var response = await client.GetAsync("/api/repo/check?owner=test&repo=test");
+            var response = await _client.GetAsync("/api/repo/check?owner=test&repo=test");
 
-            var content = await response.Content.ReadAsStringAsync(); 
-            System.Console.WriteLine("CONTENT: " + content); 
-            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+            var content = await response.Content.ReadAsStringAsync();
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
         }
     }
 }
