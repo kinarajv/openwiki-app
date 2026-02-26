@@ -1,26 +1,19 @@
 import { test, expect } from '@playwright/test';
 
-test('Ingest repository using full GitHub URL', async ({ page }) => {
+test('Search and select repository', async ({ page }) => {
   await page.goto('/');
 
-  // Enter the exact full URL provided by the user
-  const repoInput = page.locator('#repo-input');
-  await repoInput.fill('https://github.com/router-for-me/CLIProxyAPI');
+  // Mock search
+  await page.route('**/api/Search*', async route => {
+    await route.fulfill({
+      json: { results: [{ fullName: 'router-for-me/CLIProxyAPI', description: 'CLI Proxy', stars: 100, language: 'TypeScript' }] }
+    });
+  });
 
-  // Let's not mock the backend this time, let's actually hit the running .NET backend
-  // to prove the fallback catch works and it doesn't 500 error.
-  
-  const ingestButton = page.locator('#ingest-button');
-  await ingestButton.click();
+  const searchInput = page.getByTestId('search-input');
+  await searchInput.fill('CLIProxyAPI');
+  await searchInput.press('Enter');
 
-  // Wait for the UI transition
-  const chatLog = page.locator('#chat-log');
-  
-  // It should successfully parse the owner/repo from the URL and hit the fallback catch block
-  await expect(chatLog).toContainText('Ingested repository router-for-me/CLIProxyAPI successfully', { timeout: 15000 });
-  
-  // The generated document pane should show the fallback message about the AI connection
-  const docPane = page.locator('.prose');
-  await expect(docPane).toContainText('OpenWiki Analysis', { timeout: 5000 });
-  await expect(docPane).toContainText('router-for-me', { timeout: 5000 });
+  // Should display search results
+  await expect(page.getByText('router-for-me/CLIProxyAPI')).toBeVisible({ timeout: 10000 });
 });

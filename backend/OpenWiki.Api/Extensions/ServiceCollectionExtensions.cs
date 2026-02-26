@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using OpenWiki.Api.Data;
 using OpenWiki.Api.Services;
+using OpenWiki.Api.Services.Interfaces;
 using OpenWiki.Api.Repositories;
 using OpenWiki.Api.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -21,9 +22,10 @@ namespace OpenWiki.Api.Extensions
             services.AddScoped<IDocumentationRepo, DocumentationRepo>();
             services.AddScoped<IDiagramRepo, DiagramRepo>();
             
-            services.AddHttpClient<GitHubService>();
-            services.AddHttpClient<AiClientService>();
+            services.AddHttpClient<IGitHubService, GitHubService>();
+            services.AddHttpClient<IAiClientService, AiClientService>();
             services.AddScoped<GitHubIngestService>();
+            services.AddScoped<GitHubService>(); // For RepositoryController direct use
 
             return services;
         }

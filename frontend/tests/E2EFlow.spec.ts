@@ -1,37 +1,32 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('OpenWiki End-to-End Flow', () => {
+  test('Mock ingestion flow', async ({ page }) => {
+    await page.route('**/api/Repository/check*', async route => {
+      await route.fulfill({ json: { indexed: false } });
+    });
 
-  test('Mock offline ingestion and streaming fallback', async ({ page }) => {
-    // Navigate to app
-    await page.goto('/');
-
-    const repoInput = page.locator('#repo-input');
-    await repoInput.fill('microsoft/playwright');
-
-    // intercept the fetch to simulate the backend
-    await page.route('http://localhost:5000/api/ingest?owner=microsoft&repo=playwright', async route => {
-      const json = { status: 'queued', owner: 'microsoft', repo: 'playwright' };
+    await page.route('**/api/Repository/ingest*', async route => {
+      const json = {
+        status: 'completed',
+        owner: 'microsoft',
+        repo: 'playwright',
+        document: '# Overview\n\nPlaywright is a testing framework.',
+        metadata: { stars: 68000, language: 'TypeScript', description: 'Playwright testing' },
+        sections: 1,
+        relations: 0,
+        diagrams: 0
+      };
       await route.fulfill({ json });
     });
 
-    const ingestButton = page.locator('#ingest-button');
-    await ingestButton.click();
-
-    const chatLog = page.locator('#chat-log');
-    await expect(chatLog).toContainText('Ingested repository microsoft/playwright successfully', { timeout: 10000 });
-
-    const deepButton = page.getByRole('button', { name: /Deep/i });
-    await deepButton.click({ force: true });
-
-    const chatInput = page.locator('#chat-input');
-    await chatInput.fill('How does the networking work?');
-
-    // Simulate clicking send and the UI reflecting it immediately
-    const chatSend = page.locator('#chat-send');
-    await chatSend.click({ force: true });
-
-    await expect(chatLog).toContainText('You: How does the networking work?', { timeout: 5000 });
+    await page.goto('/');
+    
+    // Test card
+    await page.getByTestId('repo-card-microsoft/playwright').click();
+    
+    // Expect documentation
+    await expect(page.getByTestId('doc-viewer')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Overview')).toBeVisible();
   });
-
 });
