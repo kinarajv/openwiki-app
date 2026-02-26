@@ -2,6 +2,8 @@ using OpenWiki.Api.Data;
 using OpenWiki.Api.Hubs;
 using OpenWiki.Api.Services;
 using OpenWiki.Api.Models;
+using OpenWiki.Api.Repositories;
+using OpenWiki.Api.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -21,9 +23,12 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseInMemoryDatabase("OpenWikiDb");
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+builder.Services.AddScoped<IRepositoryRepo, RepositoryRepo>();
+builder.Services.AddScoped<IDocumentationRepo, DocumentationRepo>();
+builder.Services.AddScoped<IDiagramRepo, DiagramRepo>();
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient<GitHubService>();
 builder.Services.AddHttpClient<AiClientService>();
