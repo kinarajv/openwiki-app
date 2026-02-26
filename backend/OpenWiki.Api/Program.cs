@@ -6,8 +6,14 @@ using OpenWiki.Api.Repositories;
 using OpenWiki.Api.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration.ReadFrom.Configuration(context.Configuration);
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -154,8 +160,7 @@ app.MapPost("/api/ingest", async (string owner, string repo, GitHubIngestService
         var existing = await db.Repositories.FirstOrDefaultAsync(r => r.FullName == fullName);
         if (existing != null && existing.DocStatus == "completed")
         {
-            Console.WriteLine($"[Program.cs] Repository {fullName} already indexed, returning cached data");
-            
+            Log.Information("[Program.cs] Repository {FullName} already indexed, returning cached data", fullName);
             var existingSections = await db.DocSections
                 .Where(s => s.Documentation.RepositoryId == existing.Id)
                 .OrderBy(s => s.OrderIndex)
@@ -199,8 +204,7 @@ app.MapPost("/api/ingest", async (string owner, string repo, GitHubIngestService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Program.cs] GitHub metadata fetch failed (continuing without): {ex.Message}");
-            // Continue without metadata - git clone will still work
+            Log.Warning(ex, "[Program.cs] GitHub metadata fetch failed (continuing without): {Message}", ex.Message);
         }
 
         // Process repository
@@ -293,7 +297,7 @@ app.MapPost("/api/ingest", async (string owner, string repo, GitHubIngestService
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[Program.cs] Critical Ingest Error: {ex}");
+        Log.Error(ex, "[Program.cs] Critical Ingest Error: {Message}", ex.Message);
         return Results.Problem(ex.Message);
     }
 });

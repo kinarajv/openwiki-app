@@ -1,18 +1,28 @@
 using Microsoft.AspNetCore.SignalR;
 using OpenWiki.Api.Services;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenWiki.Api.Hubs;
 
 public class ChatHub : Hub
 {
     private readonly AiClientService _aiService;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<ChatHub> _logger;
+    private readonly string _apiUrl;
+    private readonly string _fastModel;
+    private readonly string _apiKey;
 
-    public ChatHub(AiClientService aiService, IServiceProvider serviceProvider)
+    public ChatHub(AiClientService aiService, IHttpClientFactory httpClientFactory, ILogger<ChatHub> logger, IConfiguration config)
     {
         _aiService = aiService;
-        _serviceProvider = serviceProvider;
+        _httpClientFactory = httpClientFactory;
+        _logger = logger;
+        _apiUrl = config["Cliproxy:ApiUrl"]?.TrimEnd('/') ?? "http://localhost:8317";
+        _fastModel = config["Cliproxy:FastModel"] ?? "gpt-5-codex-mini";
+        _apiKey = config["OPENCLAW_API_KEY"] ?? "sk-apikey";
     }
 
     public async Task AskQuestion(string repoId, string mode, string question)
@@ -32,7 +42,7 @@ Provide a helpful, accurate response based on the repository context. Be concise
 
             var request = new
             {
-                model = "gpt-5-codex-mini",
+                model = _fastModel,
                 messages = new[]
                 {
                     new { role = "system", content = "You are a helpful technical assistant for a code repository." },
@@ -43,11 +53,11 @@ Provide a helpful, accurate response based on the repository context. Be concise
 
             var content = new StringContent(JsonSerializer.Serialize(request), System.Text.Encoding.UTF8, "application/json");
             
-            var requestMsg = new HttpRequestMessage(HttpMethod.Post, "http://localhost:8317/v1/chat/completions");
+            var requestMsg = new HttpRequestMessage(HttpMethod.Post, $"{_apiUrl}/v1/chat/completions");
             requestMsg.Content = content;
-            requestMsg.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "sk-apikey");
+            requestMsg.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
 
-            using var httpClient = new HttpClient();
+            using var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.SendAsync(requestMsg);
             
             if (response.IsSuccessStatusCode)
@@ -78,9 +88,11 @@ Provide a helpful, accurate response based on the repository context. Be concise
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error in ChatHub for repo {RepoId}: {Message}", repoId, ex.Message);
             await Clients.Caller.SendAsync("ReceiveChunk", $"Error: {ex.Message}");
         }
         
         await Clients.Caller.SendAsync("ReceiveComplete");
     }
 }
+

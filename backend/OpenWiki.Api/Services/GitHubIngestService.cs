@@ -1,3 +1,4 @@
+using OpenWiki.Api.Repositories.Interfaces;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -9,15 +10,20 @@ namespace OpenWiki.Api.Services;
 public class GitHubIngestService : IGitHubIngestService
 {
     private readonly IAiClientService _aiService;
+    private readonly IRepositoryRepo _repositoryRepo;
+    private readonly IDocumentationRepo _documentationRepo;
+    private readonly IDiagramRepo _diagramRepo;
     private readonly ILogger<GitHubIngestService> _logger;
     private static readonly string[] _codeExtensions = { ".cs", ".ts", ".js", ".go", ".py", ".java", ".rs", ".cpp", ".h", ".tsx", ".jsx", ".swift", ".kt", ".vue", ".rb" };
 
-    public GitHubIngestService(IAiClientService aiService, ILogger<GitHubIngestService> logger)
+    public GitHubIngestService(IAiClientService aiService, IRepositoryRepo repositoryRepo, IDocumentationRepo documentationRepo, IDiagramRepo diagramRepo, ILogger<GitHubIngestService> logger)
     {
         _aiService = aiService;
+        _repositoryRepo = repositoryRepo;
+        _documentationRepo = documentationRepo;
+        _diagramRepo = diagramRepo;
         _logger = logger;
     }
-
     public async Task<IngestResult> ProcessRepositoryAsync(string owner, string repo)
     {
         string workDir = Path.Combine(Path.GetTempPath(), "deepwiki-repos", $"{owner}-{repo}-{Guid.NewGuid():N}");

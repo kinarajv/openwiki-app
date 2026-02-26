@@ -9,8 +9,9 @@ public class GitHubService : IGitHubService
 {
     private readonly HttpClient _httpClient;
     private readonly string? _token;
+    private readonly ILogger<GitHubService> _logger;
 
-    public GitHubService(HttpClient httpClient, IConfiguration config)
+    public GitHubService(HttpClient httpClient, IConfiguration config, ILogger<GitHubService> logger)
     {
         _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri("https://api.github.com/");
@@ -21,6 +22,7 @@ public class GitHubService : IGitHubService
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
         }
+        _logger = logger;
     }
 
     public virtual async Task<string> GetRepoMetadataAsync(string owner, string repo)
@@ -55,9 +57,10 @@ public class GitHubService : IGitHubService
             }
             return results;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error searching repos: {Message}", ex.Message);
             return new List<SearchResultItem>();
-        }
     }
+}
 }

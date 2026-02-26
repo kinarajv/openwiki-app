@@ -2,6 +2,8 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text;
 using OpenWiki.Api.Services.Interfaces;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace OpenWiki.Api.Services;
 
@@ -11,13 +13,15 @@ public class AiClientService : IAiClientService
     private readonly string _apiUrl;
     private readonly string _fastModel;
     private readonly string _apiKey;
+    private readonly ILogger<AiClientService> _logger;
 
-    public AiClientService(HttpClient httpClient, IConfiguration config)
+    public AiClientService(HttpClient httpClient, IConfiguration config, ILogger<AiClientService> logger)
     {
         _httpClient = httpClient;
         _apiUrl = config["Cliproxy:ApiUrl"]?.TrimEnd('/') ?? "http://localhost:8317";
         _fastModel = config["Cliproxy:FastModel"] ?? "gpt-5-codex-mini";
         _apiKey = config["OPENCLAW_API_KEY"] ?? "sk-apikey"; 
+        _logger = logger;
     }
 
     public virtual async Task<string> GenerateStructuredDocsAsync(string codeContext, string owner, string repo)
@@ -37,46 +41,6 @@ IMPORTANT: You MUST output valid JSON with this EXACT structure:
       ""level"": 2,
       ""type"": ""architecture"",
       ""files"": [""src/main.ts"", ""src/app.ts""]
-    },
-    {
-      ""title"": ""Entry Points"",
-      ""content"": ""Description of how the application starts..."",
-      ""summary"": ""Entry points summary"",
-      ""level"": 2,
-      ""type"": ""entry"",
-      ""files"": [""index.ts""]
-    },
-    {
-      ""title"": ""Key Components"",
-      ""content"": ""Major components and their responsibilities..."",
-      ""summary"": ""Components summary"",
-      ""level"": 2,
-      ""type"": ""component"",
-      ""files"": [""component1.ts""]
-    },
-    {
-      ""title"": ""Data Models"",
-      ""content"": ""Data structures and models..."",
-      ""summary"": ""Models summary"",
-      ""level"": 2,
-      ""type"": ""model"",
-      ""files"": [""models.ts""]
-    },
-    {
-      ""title"": ""API/Interface Contracts"",
-      ""content"": ""APIs and interfaces..."",
-      ""summary"": ""API summary"",
-      ""level"": 2,
-      ""type"": ""api"",
-      ""files"": [""api.ts""]
-    },
-    {
-      ""title"": ""Configuration"",
-      ""content"": ""Configuration options..."",
-      ""summary"": ""Config summary"",
-      ""level"": 2,
-      ""type"": ""config"",
-      ""files"": [""config.ts""]
     }
   ],
   ""relations"": [
@@ -85,29 +49,13 @@ IMPORTANT: You MUST output valid JSON with this EXACT structure:
       ""to"": ""Core Architecture"",
       ""type"": ""initializes"",
       ""description"": ""Entry point initializes the core architecture""
-    },
-    {
-      ""from"": ""Core Architecture"",
-      ""to"": ""Key Components"",
-      ""type"": ""uses"",
-      ""description"": ""Architecture uses components""
     }
   ],
   ""diagrams"": [
     {
       ""title"": ""Architecture Overview"",
       ""type"": ""mermaid"",
-      ""content"": ""graph TD\n    A[Entry] --> B[Core]\n    B --> C[Components]\n    B --> D[Models]\n    C --> E[API]""
-    },
-    {
-      ""title"": ""Data Flow"",
-      ""type"": ""mermaid"",
-      ""content"": ""flowchart LR\n    Input --> Process --> Output""
-    },
-    {
-      ""title"": ""Class Diagram"",
-      ""type"": ""mermaid"",
-      ""content"": ""classDiagram\n    class Main {\n        +run()\n    }\n    class Service {\n        +execute()\n    }""
+      ""content"": ""graph TD\n    A[Entry] --> B[Core]""
     }
   ]
 }
@@ -161,11 +109,9 @@ Output ONLY the JSON object, no other text.";
         } 
         catch (Exception ex) 
         {
-            Console.WriteLine($"\n=== AI CONNECTION FAILED ===");
-            Console.WriteLine($"Error: {ex.Message}");
-            Console.WriteLine($"============================\n");
-            
+            _logger.LogError(ex, "=== AI CONNECTION FAILED ===\nError: {Message}\n============================\n", ex.Message);
             throw; 
         }
     }
 }
+
