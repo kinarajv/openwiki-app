@@ -1,49 +1,18 @@
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using OpenWiki.Api.Models;
+using OpenWiki.Api.Services.Interfaces;
 
 namespace OpenWiki.Api.Services;
 
-public class IngestResult
+public class GitHubIngestService : IGitHubIngestService
 {
-    public string Overview { get; set; } = "";
-    public List<SectionResult> Sections { get; set; } = new();
-    public List<RelationResult> Relations { get; set; } = new();
-    public List<DiagramResult> Diagrams { get; set; } = new();
-}
-
-public class SectionResult
-{
-    public string Title { get; set; } = "";
-    public string Content { get; set; } = "";
-    public string Summary { get; set; } = "";
-    public int Level { get; set; } = 2;
-    public string SectionType { get; set; } = "content";
-    public List<string> RelatedFiles { get; set; } = new();
-}
-
-public class RelationResult
-{
-    public string From { get; set; } = "";
-    public string To { get; set; } = "";
-    public string Type { get; set; } = "references";
-    public string? Description { get; set; }
-}
-
-public class DiagramResult
-{
-    public string Title { get; set; } = "";
-    public string Type { get; set; } = "mermaid";
-    public string Content { get; set; } = "";
-}
-
-public class GitHubIngestService
-{
-    private readonly AiClientService _aiService;
+    private readonly IAiClientService _aiService;
     private readonly ILogger<GitHubIngestService> _logger;
     private static readonly string[] _codeExtensions = { ".cs", ".ts", ".js", ".go", ".py", ".java", ".rs", ".cpp", ".h", ".tsx", ".jsx", ".swift", ".kt", ".vue", ".rb" };
 
-    public GitHubIngestService(AiClientService aiService, ILogger<GitHubIngestService> logger)
+    public GitHubIngestService(IAiClientService aiService, ILogger<GitHubIngestService> logger)
     {
         _aiService = aiService;
         _logger = logger;

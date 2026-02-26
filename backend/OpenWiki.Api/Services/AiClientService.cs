@@ -1,10 +1,11 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text;
+using OpenWiki.Api.Services.Interfaces;
 
 namespace OpenWiki.Api.Services;
 
-public class AiClientService
+public class AiClientService : IAiClientService
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiUrl;

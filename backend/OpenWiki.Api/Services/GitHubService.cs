@@ -1,9 +1,11 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
+using OpenWiki.Api.DTOs.Responses;
+using OpenWiki.Api.Services.Interfaces;
 
 namespace OpenWiki.Api.Services;
 
-public class GitHubService
+public class GitHubService : IGitHubService
 {
     private readonly HttpClient _httpClient;
     private readonly string? _token;
@@ -28,7 +30,7 @@ public class GitHubService
         return await response.Content.ReadAsStringAsync();
     }
 
-    public virtual async Task<List<object>> SearchReposAsync(string query)
+    public virtual async Task<List<SearchResultItem>> SearchReposAsync(string query)
     {
         try
         {
@@ -38,25 +40,24 @@ public class GitHubService
             var content = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(content);
             
-            var results = new List<object>();
+            var results = new List<SearchResultItem>();
             if (doc.RootElement.TryGetProperty("items", out var items))
             {
                 foreach (var item in items.EnumerateArray())
                 {
-                    results.Add(new
-                    {
-                        fullName = item.GetProperty("full_name").GetString(),
-                        description = item.TryGetProperty("description", out var desc) ? desc.GetString() : "",
-                        stars = item.GetProperty("stargazers_count").GetInt32(),
-                        language = item.TryGetProperty("language", out var lang) ? lang.GetString() : "Unknown"
-                    });
+                    results.Add(new SearchResultItem(
+                        item.GetProperty("full_name").GetString(),
+                        item.TryGetProperty("description", out var desc) ? desc.GetString() : "",
+                        item.GetProperty("stargazers_count").GetInt32(),
+                        item.TryGetProperty("language", out var lang) ? lang.GetString() : "Unknown"
+                    ));
                 }
             }
             return results;
         }
         catch
         {
-            return new List<object>();
+            return new List<SearchResultItem>();
         }
     }
 }

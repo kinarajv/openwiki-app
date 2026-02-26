@@ -1,6 +1,7 @@
 using OpenWiki.Api.Data;
 using OpenWiki.Api.Hubs;
 using OpenWiki.Api.Services;
+using OpenWiki.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
