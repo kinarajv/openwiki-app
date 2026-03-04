@@ -14,6 +14,12 @@ public class RepositoryRepo : IRepositoryRepo
         _db = db;
     }
 
+    public async Task DeleteAsync(Repository entity)
+    {
+        _db.Repositories.Remove(entity);
+        await _db.SaveChangesAsync();
+    }
+
     public async Task<Repository?> GetByFullNameAsync(string fullName)
     {
         return await _db.Repositories

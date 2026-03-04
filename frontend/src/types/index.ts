@@ -13,6 +13,8 @@ export interface DocSection {
   slug: string;
   summary: string;
   type: string;
+  sectionNumber?: string;
+  sourceCitations?: string[];
 }
 
 export interface Diagram {
@@ -32,4 +34,12 @@ export interface RepoMetadata {
   stars: number;
   language: string;
   description?: string;
+  sourceUrl?: string;
+}
+
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  isStreaming: boolean
 }

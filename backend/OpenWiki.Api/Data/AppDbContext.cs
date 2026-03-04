@@ -20,13 +20,11 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Repository
         modelBuilder.Entity<Repository>()
             .HasKey(r => r.Id);
         modelBuilder.Entity<Repository>()
             .HasIndex(r => r.FullName).IsUnique();
 
-        // Documentation
         modelBuilder.Entity<Documentation>()
             .HasKey(d => d.Id);
         modelBuilder.Entity<Documentation>()
@@ -35,7 +33,6 @@ public class AppDbContext : DbContext
             .HasForeignKey(d => d.RepositoryId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // DocSection
         modelBuilder.Entity<DocSection>()
             .HasKey(s => s.Id);
         modelBuilder.Entity<DocSection>()
@@ -44,19 +41,15 @@ public class AppDbContext : DbContext
             .HasForeignKey(s => s.DocumentationId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // DocRelation
         modelBuilder.Entity<DocRelation>()
             .HasKey(r => r.Id);
 
-        // CodeFile
         modelBuilder.Entity<CodeFile>()
             .HasKey(c => c.Id);
 
-        // Diagram
         modelBuilder.Entity<Diagram>()
             .HasKey(d => d.Id);
 
-        // AiConversation
         modelBuilder.Entity<AiConversation>()
             .HasKey(c => c.Id);
         modelBuilder.Entity<AiConversation>()
@@ -65,7 +58,6 @@ public class AppDbContext : DbContext
             .HasForeignKey(c => c.RepositoryId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // ChatMessage
         modelBuilder.Entity<ChatMessage>()
             .HasKey(m => m.Id);
         modelBuilder.Entity<ChatMessage>()

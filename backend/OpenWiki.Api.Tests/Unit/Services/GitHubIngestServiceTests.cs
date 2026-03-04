@@ -69,7 +69,7 @@ public class GitHubIngestServiceTests
     public void ProcessRepositoryAsync_GitCloneFails_ThrowsException()
     {
         // Act & Assert
-        var ex = Assert.ThrowsAsync<Exception>(() => _service.ProcessRepositoryAsync("invalid-owner-xyz-123", "invalid-repo-xyz-123"));
-        Assert.That(ex.Message, Does.Contain("Git clone failed"));
+        var ex = Assert.ThrowsAsync<HttpRequestException>(() => _service.ProcessRepositoryAsync("invalid-owner-xyz-123", "invalid-repo-xyz-123"));
+        Assert.That(ex.Message, Does.Contain("Response status code does not indicate success"));
     }
 }

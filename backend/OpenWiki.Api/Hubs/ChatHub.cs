@@ -23,10 +23,11 @@ public class ChatHub : Hub
         _logger = logger;
         _apiUrl = config["Cliproxy:ApiUrl"]?.TrimEnd('/') ?? "http://localhost:8317";
         _fastModel = config["Cliproxy:FastModel"] ?? "gpt-5-codex-mini";
-        _apiKey = config["OPENCLAW_API_KEY"] ?? "not-configured";
-        if (string.IsNullOrEmpty(config["OPENCLAW_API_KEY"]))
-            _logger.LogWarning("OPENCLAW_API_KEY is not configured. AI features will not work.");
+        _apiKey = config["Cliproxy:ApiKey"] ?? "not-configured";
+        if (string.IsNullOrEmpty(config["Cliproxy:ApiKey"]))
+            _logger.LogWarning("Cliproxy:ApiKey is not configured. AI chat features will not work.");
     }
+
     public async Task AskQuestion(string repoId, string mode, string question)
     {
         if (Clients == null || Clients.Caller == null) return;
@@ -34,69 +35,116 @@ public class ChatHub : Hub
         if (string.IsNullOrEmpty(repoId)) return;
         
         await Clients.Caller.SendAsync("ReceiveChunk", " Analyzing codebase...\n\n");
-        await Task.Delay(500);
-        
+
         try
         {
-            var prompt = $@"You are a technical assistant helping with questions about the {repoId} repository.
+            var prompt = $@"You are a technical assistant that ONLY answers questions about the {repoId} repository and its codebase.
 
 Question: {question}
 
-Provide a helpful, accurate response based on the repository context. Be concise but thorough.";
+RULES:
+- ONLY answer questions directly related to this repository's code, architecture, documentation, dependencies, or technical details.
+- If the question is NOT about this repository (e.g., general coding questions, personal questions, requests to write unrelated code, or off-topic conversations), respond EXACTLY with:
+  ""I can only answer questions about the **{repoId}** repository. Please ask something related to this project's codebase or documentation.""
+- Do NOT write code that is unrelated to this repository.
+- Do NOT answer general knowledge questions.
+- Be concise but thorough when answering relevant questions.";
 
-            var request = new
+            var requestBody = new
             {
                 model = _fastModel,
+                stream = true,
                 messages = new[]
                 {
-                    new { role = "system", content = "You are a helpful technical assistant for a code repository." },
+                    new { role = "system", content = $"You are a documentation assistant exclusively for the {repoId} repository. You must REFUSE to answer any question that is not directly about this repository's source code, architecture, features, dependencies, or documentation. If a user asks anything off-topic (general programming, personal questions, unrelated code generation), politely decline and remind them you only discuss this specific repository." },
                     new { role = "user", content = prompt }
                 },
                 temperature = 0.5
             };
 
-            var content = new StringContent(JsonSerializer.Serialize(request), System.Text.Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonSerializer.Serialize(requestBody), System.Text.Encoding.UTF8, "application/json");
             
             var requestMsg = new HttpRequestMessage(HttpMethod.Post, $"{_apiUrl}/v1/chat/completions");
             requestMsg.Content = content;
             requestMsg.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
 
             using var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.SendAsync(requestMsg);
+            httpClient.Timeout = TimeSpan.FromMinutes(5);
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(Context.ConnectionAborted);
+            cts.CancelAfter(TimeSpan.FromSeconds(60));
+
+            using var response = await httpClient.SendAsync(requestMsg, HttpCompletionOption.ResponseHeadersRead, cts.Token);
             
             if (response.IsSuccessStatusCode)
             {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                using var document = JsonDocument.Parse(responseBody);
-                
-                var aiContent = document.RootElement
-                    .GetProperty("choices")[0]
-                    .GetProperty("message")
-                    .GetProperty("content")
-                    .GetString();
+                await using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
+                using var reader = new System.IO.StreamReader(stream);
 
-                // Stream the response word by word
-                if (!string.IsNullOrEmpty(aiContent))
+                while (!reader.EndOfStream && !cts.Token.IsCancellationRequested)
                 {
-                    foreach (var word in aiContent.Split(' '))
+                    var line = await reader.ReadLineAsync(cts.Token);
+
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+
+                    if (line == "data: [DONE]" || line == "data:[DONE]")
+                        break;
+
+                    var jsonStr = line.StartsWith("data: ") ? line.Substring(6)
+                                : line.StartsWith("data:") ? line.Substring(5)
+                                : null;
+
+                    if (jsonStr == null)
+                        continue;
+
+                    try
                     {
-                        await Clients.Caller.SendAsync("ReceiveChunk", word + " ");
-                        await Task.Delay(30);
+                        using var doc = JsonDocument.Parse(jsonStr);
+                        var choices = doc.RootElement.GetProperty("choices");
+                        if (choices.GetArrayLength() > 0)
+                        {
+                            var delta = choices[0].GetProperty("delta");
+                            if (delta.TryGetProperty("content", out var contentProp))
+                            {
+                                var chunk = contentProp.GetString();
+                                if (!string.IsNullOrEmpty(chunk))
+                                {
+                                    await Clients.Caller.SendAsync("ReceiveChunk", chunk, cts.Token);
+                                }
+                            }
+                        }
+                    }
+                    catch (JsonException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to parse SSE chunk: {Line}", line);
                     }
                 }
             }
             else
             {
+                var errorBody = await response.Content.ReadAsStringAsync(cts.Token);
+                _logger.LogError("Cliproxy API returned {StatusCode}: {Body}", response.StatusCode, errorBody);
                 await Clients.Caller.SendAsync("ReceiveChunk", "Sorry, I couldn't connect to the AI service. Please check that cliproxy is running.");
             }
+        }
+        catch (OperationCanceledException) when (Context.ConnectionAborted.IsCancellationRequested)
+        {
+            _logger.LogInformation("Client disconnected during streaming for repo {RepoId}", repoId);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Stream read timed out for repo {RepoId}", repoId);
+            await Clients.Caller.SendAsync("ReceiveChunk", "\n\n*Response timed out. Please try again.*");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ChatHub for repo {RepoId}: {Message}", repoId, ex.Message);
             await Clients.Caller.SendAsync("ReceiveChunk", $"Error: {ex.Message}");
         }
-        
-        await Clients.Caller.SendAsync("ReceiveComplete");
+        finally
+        {
+            await Clients.Caller.SendAsync("ReceiveComplete");
+        }
     }
 }
-

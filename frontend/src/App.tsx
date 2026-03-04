@@ -10,7 +10,7 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/wiki/:owner/:repo" element={<DocumentationPage />} />
+        <Route path="/wiki/:owner/:repo/:sectionSlug?" element={<DocumentationPage />} />
       </Routes>
     </Router>
   );

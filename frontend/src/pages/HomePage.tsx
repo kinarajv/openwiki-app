@@ -14,8 +14,21 @@ const POPULAR_REPOS: RepoSearchResult[] = [
   { fullName: 'router-for-me/CLIProxyAPI', description: 'CLI Proxy API', stars: 100, language: 'TypeScript' },
 ];
 
+function parseRepoUrl(url: string): { owner: string; repo: string } | null {
+  try {
+    const parsed = new URL(url);
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    if (segments.length >= 2) {
+      return { owner: segments[0], repo: segments.slice(1).join('/').replace(/\.git$/, '') };
+    }
+  } catch {
+  }
+  return null;
+}
+
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [token, setToken] = useState('');
   const [searchResults, setSearchResults] = useState<RepoSearchResult[]>([]);
   const [isChecking, setIsChecking] = useState(false);
   const { isSearching, searchRepos } = useApi();
@@ -24,6 +37,21 @@ export function HomePage() {
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
+
+    const isUrl = searchQuery.startsWith('http://') || searchQuery.startsWith('https://');
+
+    if (isUrl) {
+      const parsed = parseRepoUrl(searchQuery);
+      if (parsed) {
+        setIsChecking(true);
+        const params = new URLSearchParams();
+        params.set('repoUrl', searchQuery);
+        if (token) params.set('token', token);
+        navigate(`/wiki/${parsed.owner}/${parsed.repo}?${params.toString()}`);
+      }
+      return;
+    }
+
     const results = await searchRepos(searchQuery);
     if (results.length > 0) {
       setSearchResults(results);
@@ -53,6 +81,8 @@ export function HomePage() {
           isSearching={isSearching}
           onSearchChange={setSearchQuery}
           onSubmit={handleSearchSubmit}
+          token={token}
+          onTokenChange={setToken}
         />
 
         {isChecking && (

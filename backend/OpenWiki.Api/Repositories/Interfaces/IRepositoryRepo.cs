@@ -9,5 +9,6 @@ public interface IRepositoryRepo
     Task<Repository?> GetByFullNameAsync(string fullName);
     Task<Repository?> GetByFullNameSimpleAsync(string fullName);
     Task<Repository> AddAsync(Repository entity);
+    Task DeleteAsync(Repository entity);
     Task SaveChangesAsync();
 }

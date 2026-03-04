@@ -5,6 +5,8 @@ namespace OpenWiki.Api.Models;
 public class IngestResult
 {
     public string Overview { get; set; } = "";
+    public string CommitHash { get; set; } = string.Empty;
+    public string DefaultBranch { get; set; } = "main";
     public List<SectionResult> Sections { get; set; } = new();
     public List<RelationResult> Relations { get; set; } = new();
     public List<DiagramResult> Diagrams { get; set; } = new();
@@ -17,6 +19,8 @@ public class SectionResult
     public string Summary { get; set; } = "";
     public int Level { get; set; } = 2;
     public string SectionType { get; set; } = "content";
+    public string SectionNumber { get; set; } = "";
+    public List<string> SourceCitations { get; set; } = new();
     public List<string> RelatedFiles { get; set; } = new();
 }
 

@@ -15,7 +15,7 @@ namespace OpenWiki.Api.Extensions
         {
             services.AddDbContext<AppDbContext>(options =>
             {
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+                options.UseSqlite(configuration.GetConnectionString("DefaultConnection"));
             });
 
             services.AddScoped<IRepositoryRepo, RepositoryRepo>();
@@ -23,7 +23,10 @@ namespace OpenWiki.Api.Extensions
             services.AddScoped<IDiagramRepo, DiagramRepo>();
             
             services.AddHttpClient<IGitHubService, GitHubService>();
-            services.AddHttpClient<IAiClientService, AiClientService>();
+            services.AddHttpClient<IAiClientService, AiClientService>(client =>
+            {
+                client.Timeout = TimeSpan.FromMinutes(10);
+            });
             services.AddHttpClient("ChatHub");
             services.AddScoped<IGitHubIngestService, GitHubIngestService>();
 

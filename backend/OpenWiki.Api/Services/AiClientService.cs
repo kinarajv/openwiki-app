@@ -24,7 +24,7 @@ public class AiClientService : IAiClientService
         _logger = logger;
     }
 
-    public virtual async Task<string> GenerateStructuredDocsAsync(string codeContext, string owner, string repo, string commitHash = "main")
+    public virtual async Task<string> GenerateStructuredDocsAsync(string codeContext, string owner, string repo, string commitHash = "main", string hostBaseUrl = "https://github.com")
     {
 
         if (string.IsNullOrEmpty(codeContext)) throw new ArgumentException("codeContext cannot be null or empty", nameof(codeContext));
@@ -32,95 +32,70 @@ public class AiClientService : IAiClientService
         try {
         var systemPrompt = $@"You are an expert software architect generating a documentation STRUCTURE for a code repository.
 
-Your task is to analyze the source code and produce a JSON object containing:
-1. A comprehensive overview (1500+ words with tables)
-2. A list of 34 section STUBS (title, summary, level, type, sectionNumber — but NO detailed content)
-3. Relations between sections (20+)
-4. 10 Mermaid diagrams
+Your task is to analyze the provided source code of the {owner}/{repo} repository and produce a JSON object.
 
-IMPORTANT: For sections, you do NOT need to write full content. Just provide title, summary (2-3 sentences), level, type, sectionNumber, and files. The detailed content will be generated separately.
+ANTI-HALLUCINATION RULES (CRITICAL - VIOLATION IS UNACCEPTABLE):
+- You MUST ONLY describe files, modules, directories, and features that ACTUALLY EXIST in the provided source code context.
+- If the repository has very few files or almost no source code, produce a SHORT, HONEST overview. Do NOT invent elaborate architectures, design patterns, technology stacks, or file structures that are not present.
+- NEVER fabricate file names, directory paths, class names, function names, or module names. If you cannot see it in the code context, do NOT mention it.
+- The number of sections MUST be PROPORTIONAL to the actual code content:
+  * 0-2 source files: 1-3 sections, overview 200-500 words, 0-1 diagrams
+  * 3-10 source files: 3-8 sections, overview 500-1000 words, 1-3 diagrams
+  * 10-30 source files: 8-15 sections, overview 1000-1500 words, 3-5 diagrams
+  * 30+ source files: 15-30 sections, overview 1500+ words with tables, 5-8 diagrams
+- If the code context includes a WARNING about minimal content, your output MUST be minimal and factual.
+  - It is BETTER to produce a short, accurate document than a long, fabricated one.
 
-You MUST output valid JSON with this EXACT structure:
-{{
-  ""overview"": ""A comprehensive 1500+ word overview covering: what the project is, key capabilities table, supported languages table, browser support table, repository organization, architecture layers, build scripts, version management, engine requirements. Include at least 4 markdown tables."",
+    The JSON object must contain:
+      1. A comprehensive overview describing what THIS project actually does (length proportional to actual code)
+      2. Section STUBS derived from the actual code structure (title, summary, level, type, sectionNumber - NO detailed content)
+      3. Relations between sections
+      4. Mermaid diagrams relevant to THIS project's architecture (ONLY if enough code exists)
+
+      IMPORTANT: For sections, provide title, summary (2-3 sentences), level, type, sectionNumber, and files. Detailed content will be generated separately.
+
+    You MUST output valid JSON with this EXACT structure:
+      {{
+  ""overview"": ""A proportional-length overview based on actual code content. Include tables only if there is enough real data."",
   ""sections"": [
     {{
-      ""title"": ""Core Architecture"",
-      ""sectionNumber"": ""2"",
-      ""summary"": ""Covers the client-server architecture, protocol transport, and browser communication model."",
-      ""level"": 2,
-      ""type"": ""architecture"",
-      ""files"": [""src/client/browserType.ts"", ""src/server/browserType.ts""]
+      ""title"": ""Project Overview"",
+      ""sectionNumber"": ""1"",
+      ""summary"": ""High-level overview of the project, its goals, and key concepts."",
+      ""level"": 1,
+      ""type"": ""overview"",
+      ""files"": [""README.md""]
     }}
   ],
   ""relations"": [
     {{
-      ""from"": ""Core Architecture"",
-      ""to"": ""Package Structure"",
+      ""from"": ""Section A"",
+      ""to"": ""Section B"",
       ""type"": ""depends_on"",
-      ""description"": ""Core architecture is organized by the package structure""
+      ""description"": ""Relationship description""
     }}
   ],
   ""diagrams"": [
     {{
       ""title"": ""Architecture Overview"",
       ""type"": ""mermaid"",
-      ""content"": ""graph TD\n    A[Playwright Client] --> B[Protocol Transport]\n    B --> C[Browser Server]\n    C --> D[Chromium - CDP]\n    C --> E[Firefox - Juggler]\n    C --> F[WebKit - Inspector]""
+      ""content"": ""graph TD\n    A[Module A] --> B[Module B]""
     }}
   ]
 }}
 
-MANDATORY SECTION LIST - Generate ALL of these as section stubs (title + summary + level + type + sectionNumber):
-1. Playwright Overview (level 1, type overview, sectionNumber ""1"")
-2. Core Architecture (level 2, type architecture, sectionNumber ""2"")
-3. Package Structure (level 2, type architecture, sectionNumber ""3"")
-4. Browser Management (level 2, type architecture, sectionNumber ""4"")
-5. Browser Configuration and Protocols (level 2, type architecture, sectionNumber ""5"")
-6. Browser Installation and Registry (level 2, type architecture, sectionNumber ""6"")
-7. Browser Patching System (level 2, type architecture, sectionNumber ""7"")
-8. Core API (level 2, type api, sectionNumber ""8"")
-9. Browser and Context Management (level 2, type api, sectionNumber ""9"")
-10. Page and Frame Management (level 2, type api, sectionNumber ""10"")
-11. Locator and Element Interactions (level 2, type api, sectionNumber ""11"")
-12. Network Interception (level 2, type api, sectionNumber ""12"")
-13. API Request Context (level 2, type api, sectionNumber ""13"")
-14. Test Framework (level 2, type testing, sectionNumber ""14"")
-15. Test Configuration and Projects (level 2, type testing, sectionNumber ""15"")
-16. Fixtures and Lifecycle (level 2, type testing, sectionNumber ""16"")
-17. Test Execution Architecture (level 2, type testing, sectionNumber ""17"")
-18. Assertions and Expectations (level 2, type testing, sectionNumber ""18"")
-19. Developer Tools (level 2, type tooling, sectionNumber ""19"")
-20. Recorder and Code Generation (level 2, type tooling, sectionNumber ""20"")
-21. UI Mode (level 2, type tooling, sectionNumber ""21"")
-22. Trace Viewer (level 2, type tooling, sectionNumber ""22"")
-23. Reporting System (level 2, type reporting, sectionNumber ""23"")
-24. HTML Reporter (level 2, type reporting, sectionNumber ""24"")
-25. Built-in Reporters (level 2, type reporting, sectionNumber ""25"")
-26. Blob Reporter and Report Merging (level 2, type reporting, sectionNumber ""26"")
-27. CI/CD and Release Management (level 2, type devops, sectionNumber ""27"")
-28. Test Workflows (level 2, type devops, sectionNumber ""28"")
-29. Release and Distribution (level 2, type devops, sectionNumber ""29"")
-30. Cross-Language Synchronization (level 2, type architecture, sectionNumber ""30"")
-31. Advanced Topics (level 2, type advanced, sectionNumber ""31"")
-32. Component Testing (level 2, type testing, sectionNumber ""32"")
-33. Protocol Communication Architecture (level 2, type architecture, sectionNumber ""33"")
-34. MCP Browser Automation Server (level 2, type advanced, sectionNumber ""34"")
+HOW TO DETERMINE SECTIONS:
+- Look at the ACTUAL directory structure and module organization in the provided source code
+- Identify major components, services, models, controllers, utilities that ACTUALLY EXIST
+- ONLY create sections for modules and functionality you can SEE in the code context
+- Section types can be: overview, architecture, api, module, data, config, testing, devops, advanced
+- First section should always be a level-1 overview
 
-MANDATORY DIAGRAMS - Generate exactly 10 Mermaid diagrams:
-1. Architecture Overview (graph TD)
-2. Package Dependencies (graph LR)
-3. Test Execution Flow (sequenceDiagram)
-4. Browser Management Flow (graph TD)
-5. Protocol Generation Pipeline (flowchart LR)
-6. CI/CD Pipeline (graph TD)
-7. Component Testing Architecture (graph TD)
-8. Reporting System Flow (graph LR)
-9. Fixture Lifecycle (sequenceDiagram)
-10. Browser Installation Flow (flowchart TD)
-
-MERMAID SYNTAX: NEVER use parentheses inside square brackets. Use hyphens instead. Example: A[Playwright Driver - Node.js] NOT A[Playwright Driver (Node.js)].
-
-Generate at least 20 relations between sections.
+DIAGRAM GUIDELINES:
+- Generate diagrams ONLY if there is enough actual code to warrant them
+- Use diagram types: graph TD, graph LR, sequenceDiagram, flowchart LR, classDiagram
+- MERMAID SYNTAX: NEVER use parentheses inside square brackets. Use hyphens instead.
+- Each diagram should show REAL components from the source code
 
 Output ONLY the JSON object, no other text.";
 
@@ -133,7 +108,7 @@ Output ONLY the JSON object, no other text.";
         }
     }
 
-    public virtual async Task<string> GenerateSectionBatchAsync(string codeContext, string owner, string repo, string commitHash, List<string> sectionTitles, List<string> sectionDescriptions)
+    public virtual async Task<string> GenerateSectionBatchAsync(string codeContext, string owner, string repo, string commitHash, List<string> sectionTitles, List<string> sectionDescriptions, string hostBaseUrl = "https://github.com")
     {
         if (string.IsNullOrEmpty(codeContext)) throw new ArgumentException("codeContext cannot be null or empty", nameof(codeContext));
         if (sectionTitles == null || sectionTitles.Count == 0) throw new ArgumentException("sectionTitles cannot be null or empty", nameof(sectionTitles));
@@ -146,38 +121,43 @@ Output ONLY the JSON object, no other text.";
         }
 
         try {
-        var systemPrompt = $@"You are an expert software architect and technical writer. Generate DETAILED documentation content for the following sections of the {owner}/{repo} repository.
+        var systemPrompt = $@"You are an expert software architect and technical writer. Generate documentation content for the following sections of the {owner}/{repo} repository.
 
-For EACH section listed below, write 2000-3500 words of DENSE, DETAILED technical content. NOT summaries — write FULL documentation with subsections, tables, code examples, source citations, and cross-references.
+ANTI-HALLUCINATION RULES (CRITICAL):
+- ONLY describe code, files, modules, and features that ACTUALLY EXIST in the provided source code context.
+- NEVER fabricate file names, class names, function names, directory structures, or code patterns that are not visible in the provided context.
+- If a section topic has NO corresponding code in the context, write a brief note stating that no relevant source code was found for this section.
+- It is BETTER to produce a short, accurate section than a long, fabricated one.
+- All code examples MUST come from the actual source code provided. Do NOT invent code examples.
+- All source citations MUST point to REAL files visible in the code context. Do NOT fabricate file paths.
 
 SECTIONS TO GENERATE:
 {sectionList}
+
+Content length should be PROPORTIONAL to available code:
+- If the code context has substantial source files for a section topic: write 1000-3000 words with subsections, tables, code examples, and source citations.
+- If the code context has minimal or no source files for a section topic: write 100-300 words acknowledging limited content. Do NOT pad with fabricated details.
 
 You MUST output valid JSON with this EXACT structure:
 {{
   ""sections"": [
     {{
       ""title"": ""Section Title"",
-      ""content"": ""## Section Title\n\n### Subsection 1\n[200+ words of detailed content]\n\n### Subsection 2\n[200+ words]\n\n| Column 1 | Column 2 | Column 3 |\n| :--- | :--- | :--- |\n| data | data | data |\n\n```javascript\n// code example\n```\n\n**Sources:** [file:L1-L50](https://github.com/{owner}/{repo}/blob/{commitHash}/file#L1-L50)\n\nFor details, see [Other Section](/wiki/{owner}/{repo}/other-section)"",
-      ""sources"": [""https://github.com/{owner}/{repo}/blob/{commitHash}/path/to/file#L1-L50""]
+      ""content"": ""## Section Title\n\n[Content based on ACTUAL source code]\n\n**Sources:** [file:L1-L50]({hostBaseUrl}/{owner}/{repo}/blob/{commitHash}/file#L1-L50)"",
+      ""sources"": [""{hostBaseUrl}/{owner}/{repo}/blob/{commitHash}/path/to/real/file#L1-L50""]
     }}
   ]
 }}
 
-CONTENT QUALITY REQUIREMENTS FOR EACH SECTION:
-1. 2000-3500 words of REAL technical content referencing the actual source code
-2. At least 3 subsections with ### headers
-3. At least 3 code examples with real code patterns from the repository source files, using ```language tag (javascript, typescript, bash, yaml, json)
-4. At least 1 markdown table with | :--- | column alignment and 3+ data rows
-5. At least 15 source citations as GitHub URLs in the ""sources"" array, each pointing to a REAL file visible in the code context provided above
-6. At least 10 inline source citations throughout the content: **Sources:** [filename:L1-L10](https://github.com/{owner}/{repo}/blob/{commitHash}/filename#L1-L10)
-7. At least 2 cross-references to other sections: [Section Title](/wiki/{owner}/{repo}/section-slug)
-8. Proper markdown formatting: ## and ### headers, bullet lists, numbered lists, **bold**, code blocks
-9. Include 5-6 mermaid diagrams per section as ```mermaid code blocks inside the content. Each diagram should have 8+ nodes showing real component relationships from the source code. Use graph TD, sequenceDiagram, flowchart LR, classDiagram, or stateDiagram types.
-10. MERMAID SYNTAX: NEVER use parentheses inside square brackets. Use hyphens instead. Example: A[Playwright Driver - Node.js] NOT A[Playwright Driver (Node.js)].
-11. The sources array MUST contain at least 15 GitHub URLs pointing to REAL files from the repository code context provided. Use the actual file paths you see in the code context above. Format: https://github.com/{owner}/{repo}/blob/{commitHash}/path/to/file.ts#L1-L50. DO NOT fabricate paths — only reference files present in the code context above.
-
-ABSOLUTE MINIMUM: Each section must be at least 1800 words. Sections under 1200 words are UNACCEPTABLE.
+CONTENT REQUIREMENTS (scaled to available code):
+1. Reference ONLY actual source code visible in the context
+2. Include subsections with ### headers where appropriate
+3. Include code examples ONLY from the actual repository source files
+4. Include markdown tables ONLY if real data exists to populate them
+5. Source citations MUST point to REAL files from the code context. Format: {hostBaseUrl}/{owner}/{repo}/blob/{commitHash}/path/to/file#L1-L50
+6. Cross-references to other sections: [Section Title](/wiki/{owner}/{repo}/section-slug)
+7. MERMAID SYNTAX: NEVER use parentheses inside square brackets. Use hyphens instead.
+8. Include mermaid diagrams ONLY if they can accurately represent real components from the source code.
 
 Output ONLY the JSON object, no other text.";
 

@@ -13,6 +13,8 @@ public class DocSection
     public int OrderIndex { get; set; }
     public string? ContentMarkdown { get; set; }
     public string? Summary { get; set; }
+    public string SectionNumber { get; set; } = string.Empty;
+    public string? SourceCitationsJson { get; set; }
     public string SectionType { get; set; } = "content"; // content, diagram, code, api, model
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

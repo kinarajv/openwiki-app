@@ -1,6 +1,7 @@
 using OpenWiki.Api.Hubs;
 using OpenWiki.Api.Extensions;
 using OpenWiki.Api.Middleware;
+using OpenWiki.Api.Data;
 using Serilog;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +31,12 @@ builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddSignalR();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+}
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

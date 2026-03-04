@@ -124,7 +124,7 @@ public class ChatHubTests
     {
         _hub.Clients = null;
         await _hub.AskQuestion("repo1", "mode1", "question?");
-        _aiServiceMock.Verify(a => a.GenerateStructuredDocsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _aiServiceMock.Verify(a => a.GenerateStructuredDocsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
 }
